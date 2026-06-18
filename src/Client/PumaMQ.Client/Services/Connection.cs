@@ -130,6 +130,8 @@ public class Connection
             Channel? channel = default;
             bool channelExist = _channels.TryGetValue(l1Frame.Channel, out channel);
 
+            await channel.HandleReceivedFrameAsync(l1Frame);
+
             //if (!channelExist)
             //{
             //    channel = new Channel(_socketFrameHandler, l1Frame.Channel);

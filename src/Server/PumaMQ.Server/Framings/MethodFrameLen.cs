@@ -31,6 +31,20 @@ internal static class MethodFrameLen
 }
 
 
+internal static class SpecMethodFrameLen
+{
+    //Connection.Start
+    internal const byte VersionMajor = 1;
+    internal const byte VersionMinor = 1;
+
+    //Exchange.Declare   Queue.Declare   Queue.Bind    Basic.Publish    Basic.Consume
+    internal const byte Ticket = 2;
+    internal const byte Flags = 1;
+    internal const byte Args = 4;
+    internal const byte StringLen = 1;
+}
+
+
 internal static class HeaderFrameLen
 {
     internal const byte Class = 2;

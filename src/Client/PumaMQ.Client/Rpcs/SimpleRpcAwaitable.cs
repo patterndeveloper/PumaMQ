@@ -8,15 +8,18 @@ internal class SimpleRpcAwaitable : RpcAwaitable<bool>
     {
     }
 
-    internal override void Complete(L2Frame l2Frame)
+
+    public override void Complete(L2Frame l2Frame)
     {
         if (l2Frame.ClassMethod == _classMethod)
         {
             _taskComSrc.SetResult(true);
         }
-
-        string message = $"RPC expecting frame with ClassMethod: {_classMethod}, but actual ClassMethod is {l2Frame.ClassMethod}";
-        InvalidOperationException exception = new InvalidOperationException(message);
-        _taskComSrc.SetException(exception);
+        else
+        {
+            string message = $"RPC expecting frame with ClassMethod: {_classMethod}, but actual ClassMethod is {l2Frame.ClassMethod}";
+            InvalidOperationException exception = new InvalidOperationException(message);
+            _taskComSrc.SetException(exception);
+        }
     }
 }

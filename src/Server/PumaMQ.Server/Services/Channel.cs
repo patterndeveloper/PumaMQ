@@ -39,6 +39,11 @@ internal class Channel
             await HandleChannelOpenAsync(l2Frame);
         }
 
+        if(l2Frame.ClassMethod == ClassMethod.BasicConsume)
+        {
+            await HandleBasicConsumeAsync(l2Frame);
+        }
+
         string receivedMessage = Encoding.UTF8.GetString(l2Frame.Body.Memory.Span);
 
         Console.WriteLine($"Message: {receivedMessage} received from client");
@@ -47,10 +52,26 @@ internal class Channel
 
     internal async Task HandleChannelOpenAsync(L2Frame l2Frame)
     {
-        await Task.Delay(60000);
         ChannelOpenOk channelOpenOk = new();
         RentedMemory serializedChannelOpenOk = FrameSerializer.Serialize(ref channelOpenOk, ChannelNo);
-        await _socketFrameHandler.WriteAsync(serializedChannelOpenOk);
+        await _socketFrameHandler.WriteAsync(serializedChannelOpenOk).ConfigureAwait(false);
+    }
+
+
+    internal async Task HandleBasicConsumeAsync(L2Frame l2Frame)
+    {
+        //1- Parse payload of method frame
+        BasicConsume basicConsume = new BasicConsume(l2Frame);
+
+        //2- Generate consumer-tag
+        string consumerTag = "consumerTag-1";
+
+        //3- Insert consumer (consumerTag, queueId, channelId) into db
+
+        //4- Return Basic.Consume-Ok
+        BasicConsumeOk basicConsumeOk = new BasicConsumeOk(consumerTag);
+        RentedMemory serializedBasicConsumeOk = FrameSerializer.Serialize(ref basicConsumeOk, ChannelNo);
+        await _socketFrameHandler.WriteAsync(serializedBasicConsumeOk).ConfigureAwait(false);
     }
 
     //Todo: Add heartbeat handling for channel 0

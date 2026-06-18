@@ -63,8 +63,11 @@ internal class Connection
 
             if (!channelExist)
             {
+                //1- if frame is channel.open create channel
                 channel = new Channel(_socketFrameHandler, l1Frame.Channel);
                 _channels.Add(channel.ChannelNo, channel);
+
+                //2- else throw exception and close connection
             }
 
             await channel!.HandleL2FrameAsync(l1Frame).ConfigureAwait(false);

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace PumaMQ.Client.Rpcs;
 
-internal abstract class RpcAwaitable<TResult> : IDisposable
+internal abstract class RpcAwaitable<TResult> : IRpcAwaitable, IDisposable
 {
     protected readonly TaskCompletionSource<TResult> _taskComSrc;
     private readonly ConfiguredTaskAwaitable<TResult> _configuredTaskAwaitable;
@@ -39,7 +39,10 @@ internal abstract class RpcAwaitable<TResult> : IDisposable
     }
 
 
-    internal abstract void Complete(L2Frame l2Frame);
+    public virtual void Complete(L2Frame l2Frame)
+    {
+
+    }
 
 
     internal ConfiguredTaskAwaitable<TResult>.ConfiguredTaskAwaiter GetAwaiter()
@@ -67,4 +70,10 @@ internal abstract class RpcAwaitable<TResult> : IDisposable
             _linkedCts.Dispose();
         }
     }
+}
+
+
+internal interface IRpcAwaitable
+{
+    void Complete(L2Frame l2Frame);
 }
