@@ -1,4 +1,7 @@
-﻿using System.IO.Pipelines;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using PumaMQ.Server.Persistences;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -7,11 +10,19 @@ namespace PumaMQ.Server.Services;
 
 internal class BrokerServer
 {
-    private readonly IPAddress _localIp = IPAddress.Loopback;
-    private const int _localPort = 8123;
+    private readonly IPAddress _localIp;
+    private int _localPort;
+
+    internal Dictionary<int, Connection> _connections = [];
+    private readonly IServiceProvider _serviceProvider;
 
 
-    internal Dictionary<Guid, Connection> _connections = [];
+    public BrokerServer(IServiceProvider serviceProvider, IOptions<EndPointOption> options)
+    {
+        _serviceProvider = serviceProvider;
+        _localIp = IPAddress.Parse(options.Value.IpAddress);
+        _localPort = options.Value.Port;
+    }
 
 
     internal async Task Connect()
@@ -21,21 +32,13 @@ internal class BrokerServer
         using TcpListener tcpListener = TcpListenerFactory.CreateAndStart(localEndPoint);
 
         Console.WriteLine($"Server started on port #{localEndPoint.Port}");
-        //Console.ReadLine();
 
         while (true)
         {
             var tcpClient = await tcpListener.AcceptTcpClientAsync();
 
-            //_ = ProcessRequest(tcpClient.GetStream());
-
-            //Handler create read and write loop that handle send and receive from consumer
-
-            Connection connection = new(tcpClient);
-
+            Connection connection = await Connection.CreateAsync(_serviceProvider, tcpClient);
             _connections.Add(connection.Id, connection);
-
-            //SocketFrameHandler.Create(tcpClient);
         }
     }
 

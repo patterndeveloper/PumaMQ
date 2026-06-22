@@ -1,28 +1,55 @@
-﻿using PumaMQ.Server.Framings;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PumaMQ.Server.Framings;
+using PumaMQ.Server.Persistences;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
 namespace PumaMQ.Server.Services;
 
 internal class Connection
 {
-    internal Guid Id { get; set; }
+    internal int Id { get; set; }
 
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ConnectionRepository _connectionRepository;
     private readonly SocketFrameHandler _socketFrameHandler;
 
     private readonly Dictionary<ushort, Channel> _channels = [];
 
 
-    public Connection(TcpClient tcpClient)
+    public Connection(int id,
+                      IServiceProvider serviceProvider,
+                      ConnectionRepository connectionRepository,
+                      TcpClient tcpClient)
     {
-        Id = Guid.NewGuid();
+        _serviceProvider = serviceProvider;
+        Id = id;
+        _connectionRepository = connectionRepository;
 
         _socketFrameHandler = SocketFrameHandler.Create(tcpClient);
 
-        Channel channel0 = new Channel(_socketFrameHandler, 0);
+        Channel channel0 = Channel.CreateAsync(_serviceProvider, _socketFrameHandler, 0, Id).Result;
         _channels.Add(0, channel0);
 
         CancellationTokenSource readLoopCts = new CancellationTokenSource();
         Task readLoopTask = Task.Run(() => ReadLoopAsync(readLoopCts.Token));
+    }
+
+
+    internal static async Task<Connection> CreateAsync(IServiceProvider serviceProvider, TcpClient tcpClient)
+    {
+        ConnectionRepository connectionRepository = serviceProvider.GetRequiredService<ConnectionRepository>();
+
+        Models.Connection storedConnection = new Models.Connection()
+        {
+            VirtualHost = "/",
+            ConnectedAt = DateTime.UtcNow,
+        };
+
+        int id = await connectionRepository.CreateAsync(storedConnection);
+
+        Connection connection = new Connection(id, serviceProvider, connectionRepository, tcpClient);
+        return connection;
     }
 
 
@@ -64,7 +91,7 @@ internal class Connection
             if (!channelExist)
             {
                 //1- if frame is channel.open create channel
-                channel = new Channel(_socketFrameHandler, l1Frame.Channel);
+                channel = Channel.CreateAsync(_serviceProvider, _socketFrameHandler, l1Frame.Channel, Id).Result;
                 _channels.Add(channel.ChannelNo, channel);
 
                 //2- else throw exception and close connection

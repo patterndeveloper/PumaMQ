@@ -16,7 +16,7 @@ internal partial class Program
 
         consumer.BasicConsumed += Consumer_BasicConsumed;
 
-        await channel.BasicConsumeAsync("main-q", consumer);
+        await channel.BasicConsumeAsync("main-q", "main-con", consumer);
 
         //ReadOnlyMemory<byte> body = Encoding.UTF8.GetBytes("This is 1st message");
 

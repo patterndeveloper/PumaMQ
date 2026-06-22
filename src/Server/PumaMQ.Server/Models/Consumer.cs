@@ -4,6 +4,6 @@ internal class Consumer
 {
     internal int Id { get; set; }
     internal int QueueId { get; set; }
-    internal int ChannelNo { get; set; }
-    internal Guid ConnectionId { get; set; }
+    internal int ChannelId { get; set; }
+    internal string Tag { get; set; } = default!;
 }

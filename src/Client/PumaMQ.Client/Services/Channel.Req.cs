@@ -6,7 +6,7 @@ namespace PumaMQ.Client.Services;
 
 public partial class Channel
 {
-    public async Task BasicConsumeAsync(string queue, Consumer consumer, CancellationToken cancellationToken = default)
+    public async Task BasicConsumeAsync(string queue, string tag, Consumer consumer, CancellationToken cancellationToken = default)
     {
         //1-Create rpc awatable
         BasicConsumeRpcAwaitable rpcAwaitable = new BasicConsumeRpcAwaitable(ClassMethod.BasicConsumeOk, consumer, _rpcTimeout, cancellationToken);
@@ -16,7 +16,7 @@ public partial class Channel
         try
         {
             //2- send basic consume frame
-            BasicConsume basicConsume = new BasicConsume(queue);
+            BasicConsume basicConsume = new BasicConsume(queue, tag);
             RentedMemory serializedBasicConsume = FrameSerializer.Serialize(ref basicConsume, ChannelNo);
             await _socketFrameHandler.WriteAsync(serializedBasicConsume, rpcAwaitable.LinkedCancellationToken).ConfigureAwait(false);
 

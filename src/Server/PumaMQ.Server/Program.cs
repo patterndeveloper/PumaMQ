@@ -1,15 +1,44 @@
-﻿using PumaMQ.Server.Services;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using PumaMQ.Server.Persistences;
+using PumaMQ.Server.Services;
 
 
 internal partial class Program
 {
     private static async Task Main(string[] args)
     {
-        BrokerServer handler = new BrokerServer();
+        IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
 
-        await handler.Connect();
+        hostBuilder.ConfigureAppConfiguration(cfg =>
+        {
+            cfg.AddJsonFile("appsettings.json", optional: false);
+        });
+
+        hostBuilder.ConfigureServices((ctx, srv) =>
+        {
+            srv.AddOptions<EndPointOption>().BindConfiguration("EndPointOption");
+            srv.AddOptions<DbOption>().BindConfiguration("DbOption");
+
+            srv.AddSingleton<DbConnectionFactory>();
+            srv.AddSingleton<ConnectionRepository>();
+            srv.AddSingleton<ChannelRepository>();
+            srv.AddSingleton<ConsumerRepository>();
+
+            //srv.AddSingleton<SocketFrameHandler>();
+            //srv.AddTransient<L2Parser>();
+            //srv.AddTransient<SocketFrameHandler>();
+
+            srv.AddSingleton<BrokerServer>();
+        });
+
+        IHost host = hostBuilder.Build();
+
+        BrokerServer brokerServer = host.Services.GetRequiredService<BrokerServer>();
+
+        await brokerServer.Connect();
 
         Console.ReadLine();
     }
 }
-
