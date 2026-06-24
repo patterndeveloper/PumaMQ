@@ -1,14 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PumaMQ.Server.Framings;
-using PumaMQ.Server.Models;
 using PumaMQ.Server.Parsers;
 using PumaMQ.Server.Persistences;
 using PumaMQ.Server.Rpcs;
-using System.Text;
 
 namespace PumaMQ.Server.Services;
 
-internal class Channel
+internal partial class Channel
 {
     internal int Id { get; set; }
     internal ushort ChannelNo { get; }
@@ -16,6 +13,7 @@ internal class Channel
     private readonly IServiceProvider _serviceProvider;
     private readonly ChannelRepository _channelRepository;
     private readonly ConsumerRepository _consumerRepository;
+    private readonly ExchangeRepository _exchangeRepository;
     private readonly QueueRepository _queueRepository;
 
     private readonly SocketFrameHandler _socketFrameHandler;
@@ -30,15 +28,21 @@ internal class Channel
                      IServiceProvider serviceProvider,
                      ChannelRepository channelRepository,
                      ConsumerRepository consumerRepository,
+                     ExchangeRepository exchangeRepository,
+                     QueueRepository queueRepository,
                      SocketFrameHandler socketFrameHandler,
                      ushort channelNo)
     {
         Id = id;
+        ChannelNo = channelNo;
+
         _serviceProvider = serviceProvider;
         _channelRepository = channelRepository;
         _consumerRepository = consumerRepository;
+        _exchangeRepository = exchangeRepository;
+        _queueRepository = queueRepository;
+
         _socketFrameHandler = socketFrameHandler;
-        ChannelNo = channelNo;
         _l2Parser = new();
     }
 
@@ -50,6 +54,8 @@ internal class Channel
     {
         ChannelRepository channelRepository = serviceProvider.GetRequiredService<ChannelRepository>();
         ConsumerRepository consumerRepository = serviceProvider.GetRequiredService<ConsumerRepository>();
+        ExchangeRepository exchangeRepository = serviceProvider.GetRequiredService<ExchangeRepository>();
+        QueueRepository queueRepository = serviceProvider.GetRequiredService<QueueRepository>();
 
         Models.Channel storedChannel = new()
         {
@@ -67,78 +73,10 @@ internal class Channel
             Exception exc = ex;
         }
 
-        Channel channel = new(id, serviceProvider, channelRepository, consumerRepository, socketFrameHandler, channelNo);
+        Channel channel = new(id, serviceProvider, channelRepository, consumerRepository, exchangeRepository, queueRepository, socketFrameHandler, channelNo);
         return channel;
     }
 
-
-    internal async Task HandleL2FrameAsync(L1Frame l1Frame)
-    {
-        L2Frame? l2Frame = _l2Parser.Parse(l1Frame);
-
-        if (l2Frame == null)
-        {
-            return;
-        }
-
-        if (l2Frame.ClassMethod == ClassMethod.ChannelOpen)
-        {
-            await HandleChannelOpenAsync(l2Frame);
-        }
-
-        if (l2Frame.ClassMethod == ClassMethod.BasicConsume)
-        {
-            await HandleBasicConsumeAsync(l2Frame);
-        }
-
-        string receivedMessage = Encoding.UTF8.GetString(l2Frame.Body.Memory.Span);
-
-        Console.WriteLine($"Message: {receivedMessage} received from client");
-    }
-
-
-    internal async Task HandleChannelOpenAsync(L2Frame l2Frame)
-    {
-        ChannelOpenOk channelOpenOk = new();
-        RentedMemory serializedChannelOpenOk = FrameSerializer.Serialize(ref channelOpenOk, ChannelNo);
-        await _socketFrameHandler.WriteAsync(serializedChannelOpenOk).ConfigureAwait(false);
-    }
-
-
-    internal async Task HandleBasicConsumeAsync(L2Frame l2Frame)
-    {
-        //1- Parse payload of method frame
-        BasicConsume basicConsume = new BasicConsume(l2Frame);
-
-        //2- Insert consumer (consumerTag, queueId, channelId) into db
-        Queue? queue = await _queueRepository.GetAsync(basicConsume.Queue).ConfigureAwait(false);
-
-        if (queue == null)
-        {
-            //Todo: Add Queue not found exception
-            throw new Exception("Queue not exist");
-        }
-
-        try
-        {
-            Consumer consumer = new()
-            {
-                QueueId = queue.Id,
-                ChannelId = Id,
-                Tag = basicConsume.Tag,
-            };
-            await _consumerRepository.CreateAsync(consumer);
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
-
-        //3- Return Basic.Consume-Ok
-        BasicConsumeOk basicConsumeOk = new BasicConsumeOk(basicConsume.Tag);
-        RentedMemory serializedBasicConsumeOk = FrameSerializer.Serialize(ref basicConsumeOk, ChannelNo);
-        await _socketFrameHandler.WriteAsync(serializedBasicConsumeOk).ConfigureAwait(false);
-    }
 
     //Todo: Add heartbeat handling for channel 0
 }

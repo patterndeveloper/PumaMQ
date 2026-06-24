@@ -11,7 +11,7 @@ internal static class FrameSerializer
     private const ushort _headerWeight = 0x00_00;
     private const ushort _headerFlags = 0x00_00;
 
-    internal static RentedMemory Serialize<TMethod>(ref TMethod frame, ReadOnlyMemory<byte> body, ushort channelNo) where TMethod : IMethodFrame
+    internal static RentedMemory Serialize<TMethod>(ref TMethod frame, ReadOnlyMemory<byte> body, ushort channelNo) where TMethod : IClientResponseMethodFrame
     {
         int methodOverheadLen = FrameLen.TotalFixed;
         int methodPayloadLen = frame.GetPayloadLen();
@@ -99,7 +99,7 @@ internal static class FrameSerializer
     }
 
 
-    internal static RentedMemory Serialize<TMethod>(ref TMethod frame, ushort channelNo) where TMethod : IMethodFrame
+    internal static RentedMemory Serialize<TMethod>(ref TMethod frame, ushort channelNo) where TMethod : IClientResponseMethodFrame
     {
         int methodOverheadLen = FrameLen.TotalFixed;
         int methodPayloadLen = frame.GetPayloadLen();

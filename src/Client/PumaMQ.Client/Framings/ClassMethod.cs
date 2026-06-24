@@ -8,5 +8,7 @@ internal enum ClassMethod : uint
     BasicConsume = 0x00_3C_00_14,
     BasicConsumeOk = 0x00_0C_00_15,
     BasicDeliver = 0x00_3C_00_3C,
-    BasicAck = 0x00_3C_00_50
+    BasicAck = 0x00_3C_00_50,
+    ExchangeDeclare = 0x00_28_00_0A,
+    ExchangeDeclareOk = 0x00_28_00_0B
 }

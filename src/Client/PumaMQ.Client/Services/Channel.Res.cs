@@ -35,6 +35,12 @@ public partial class Channel
             //BasicConsumeOk basicConsumeOk = new BasicConsumeOk(l2Frame);
         }
 
+
+        if(l2Frame.ClassMethod == ClassMethod.ExchangeDeclareOk)
+        {
+            _rpcAwaitable!.Complete(l2Frame);
+        }
+
             //3.2 if client request is async, handle that (no use of _rpc awaitable)   (Basic.Ack   Basic.Nack)
 
         if(l2Frame.ClassMethod == ClassMethod.BasicAck)

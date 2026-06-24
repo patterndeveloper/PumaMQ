@@ -2,7 +2,7 @@
 
 namespace PumaMQ.Server.Framings;
 
-internal readonly struct ChannelOpenOk : IClientResponseMethodFrame
+internal readonly struct ExchangeDeclareOk : IClientResponseMethodFrame
 {
     public int GetPayloadLen()
     {
@@ -16,7 +16,7 @@ internal readonly struct ChannelOpenOk : IClientResponseMethodFrame
     {
         int currentIndex = 0;
 
-        BinaryPrimitives.WriteUInt32BigEndian(buffer, (uint)ClassMethod.ChannelOpenOk);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer, (uint)ClassMethod.ExchangeDeclareOk);
         currentIndex += MethodFrameLen.Class + MethodFrameLen.Method;
 
         return currentIndex;

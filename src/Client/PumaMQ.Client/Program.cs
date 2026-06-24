@@ -12,11 +12,13 @@ internal partial class Program
 
         Channel channel = await connection.CreateChannelAsync();
 
+        await channel.ExchangeDeclareAsync("Secondary-Ex");
+
         Consumer consumer = new Consumer();
 
         consumer.BasicConsumed += Consumer_BasicConsumed;
 
-        await channel.BasicConsumeAsync("main-q", "main-con", consumer);
+        await channel.BasicConsumeAsync("Main-q", "Main-con", consumer);
 
         //ReadOnlyMemory<byte> body = Encoding.UTF8.GetBytes("This is 1st message");
 

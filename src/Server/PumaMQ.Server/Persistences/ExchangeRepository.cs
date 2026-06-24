@@ -4,18 +4,18 @@ using PumaMQ.Server.Models;
 
 namespace PumaMQ.Server.Persistences;
 
-internal class ChannelRepository
+internal class ExchangeRepository
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
 
 
-    public ChannelRepository(DbConnectionFactory dbConnectionFactory)
+    public ExchangeRepository(DbConnectionFactory dbConnectionFactory)
     {
         _dbConnectionFactory = dbConnectionFactory;
     }
 
 
-    internal async Task<int> CreateAsync(Channel channel, CancellationToken cancellationToken = default)
+    internal async Task<int> CreateAsync(Exchange exchange, CancellationToken cancellationToken = default)
     {
         SqlConnection sqlConnection = default!;
 
@@ -23,11 +23,11 @@ internal class ChannelRepository
         {
             sqlConnection = await _dbConnectionFactory.CreateAsync(cancellationToken).ConfigureAwait(false);
 
-            string commandText = @"INSERT INTO [PumaMQ].[dbo].[Channel] ([TcpConnectionId], [ChannelNo])
-                                   OUTPUT INSERTED.Id
-                                   VALUES (@TcpConnectionId, @ChannelNo);";
+            string commandText = @"INSERT INTO dbo.[Exchange] ([Name])
+                                   OUTPUT INSERTED.[Id]
+                                   VALUES (@Name);";
 
-            object param = new { TcpConnectionId = channel.ConnectionId, ChannelNo = (short) channel.ChannelNo };
+            object param = new {Name = exchange.Name};
 
             CommandDefinition commandDefinition = new(commandText, param, cancellationToken: cancellationToken);
 

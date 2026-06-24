@@ -1,6 +1,6 @@
 ﻿namespace PumaMQ.Server.Framings;
 
-internal interface IMethodFrame
+internal interface IClientResponseMethodFrame
 {
     int GetPayloadLen();
 

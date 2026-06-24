@@ -3,7 +3,7 @@ using System.Text;
 
 namespace PumaMQ.Server.Framings;
 
-internal readonly struct BasicConsume : IRequestMethodFrame
+internal readonly struct BasicConsume : IClientRequestMethodFrame
 {
     public string Queue { get; }
     public string Tag { get; }

@@ -25,6 +25,8 @@ internal partial class Program
             srv.AddSingleton<ConnectionRepository>();
             srv.AddSingleton<ChannelRepository>();
             srv.AddSingleton<ConsumerRepository>();
+            srv.AddSingleton<ExchangeRepository>();
+            srv.AddSingleton<QueueRepository>();
 
             //srv.AddSingleton<SocketFrameHandler>();
             //srv.AddTransient<L2Parser>();
